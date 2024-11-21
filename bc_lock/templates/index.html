@@ -1,0 +1,82 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BC-lock Schedule Dashboard</title>
+    <style>
+        .low { background-color: lightcoral; }
+        .medium { background-color: lightgoldenrodyellow; }
+        .high { background-color: lightgreen; }
+        .highlight { font-weight: bold; border: 2px solid black; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.9em; }
+        th, td { border: 1px solid #ddd; padding: 4px; text-align: center; }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script>
+        function filterTasksByGrade(grade) {
+            let taskOptions = document.querySelectorAll('.task-option');
+            taskOptions.forEach(option => {
+                if (grade === '' || option.dataset.grade === grade) {
+                    option.style.display = 'block';
+                } else {
+                    option.style.display = 'none';
+                }
+            });
+        }
+
+        function takeScreenshot() {
+            html2canvas(document.body, { scale: 2 }).then(canvas => {
+                let link = document.createElement('a');
+                link.download = 'schedule_dashboard.png';
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+            });
+        }
+    </script>
+</head>
+<body>
+    <h1>BC-lock Schedule Dashboard</h1>
+    <a href="/add_task"><button>Add Task</button></a>
+    <button onclick="takeScreenshot()">Take Screenshot</button>
+    <table>
+        <thead>
+            <tr>
+                <th>Time</th>
+                <th>Attention Grade</th>
+                <th>Monday</th>
+                <th>Tuesday</th>
+                <th>Wednesday</th>
+                <th>Thursday</th>
+                <th>Friday</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for idx, time_block in enumerate(time_blocks) %}
+            <tr>
+                <td>{{ time_block }}</td>
+                <td>
+                    <select name="attention_grade" onchange="filterTasksByGrade(this.value)">
+                        <option value="">--Select Grade--</option>
+                        {% for grade in attention_grades %}
+                        <option value="{{ grade }}">{{ grade }}</option>
+                        {% endfor %}
+                    </select>
+                </td>
+                {% for day in schedule_data.keys() if day not in ['Saturday', 'Sunday'] %}
+                <td class="{% if schedule_data[day][idx] == 'LOW' %}low{% elif schedule_data[day][idx] == 'MEDIUM' %}medium{% elif schedule_data[day][idx] == 'HIGH' %}high{% endif %} {% if day == current_day %}highlight{% endif %}">
+                    <select name="task">
+                        <option value="">--Select Task--</option>
+                        {% for grade, task_list in tasks.items() %}
+                            {% for task in task_list %}
+                            <option class="task-option" data-grade="{{ grade }}" value="{{ task }}">{{ task }} ({{ grade }})</option>
+                            {% endfor %}
+                        {% endfor %}
+                    </select>
+                </td>
+                {% endfor %}
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>
